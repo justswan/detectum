@@ -1,0 +1,141 @@
+---
+- hosts: init
+
+  vars:
+    ruby_deploy_user: ruby_deploy
+    ca_keys:
+      - detectumCA.crt
+      - detectumCA2.crt
+
+  tasks:
+  - name: adding detectum repo
+    sudo: yes
+    apt_repository: repo='deb  [arch=amd64] http://debian.detectum.com/debian jessie main' state=present
+  - name: adding detectum src-repo
+    sudo: yes
+    apt_repository: repo='deb-src http://debian.detectum.com/debian jessie main' state=present
+  - name: adding ruby-ng repo
+    sudo: yes
+    apt_repository: repo='deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main' state=present
+  - name: adding ruby-ng src-repo
+    sudo: yes
+    apt_repository: repo='deb-src http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu trusty main' state=present
+  - name: get key
+    sudo: yes
+    command: gpg --keyserver keyserver.ubuntu.com --recv-keys 80F70E11F0F0D5F10CB20E62F5DA5F09C3173AA6
+  - name: import key
+    sudo: yes
+    command: gpg --armor --export C3173AA6  | apt-key add -
+  - name: install pakages
+    sudo: yes
+    apt: pkg={{ item }} state=installed update_cache=yes force=yes
+    with_items:
+      - atop
+      - dstat
+      - screen
+      - curl
+      - vim
+      - emacs
+      - ack-grep
+      - ant
+      - default-jdk
+      - jsvc
+      - openjdk-7-jre-headless
+      - openjdk-7-jdk
+      - postfix
+      - strace
+      - unzip
+      - zip
+      - git
+      - erlang-mode
+      - haml-elisp
+      - hunspell
+      - hunspell-en-us
+      - emacs24-common-non-dfsg
+      - dpkg-dev
+      - bc
+      - automake
+      - autoconf
+      - autotools-dev
+      - build-essential
+      - htop
+      - info
+      - krb5-user
+      - ldap-utils
+      - myspell-ru
+      - python3
+      - python-yaml
+      - mailutils
+      - libmysqlclient-dev
+      - libsqlite3-dev
+      - libssl-dev
+      - zlib1g-dev
+      - sqlite3
+      - mystem
+      - scala
+      - gcc
+      - g++
+      - bison
+      - libbison-dev
+      - libffi-dev
+      - libgdbm-dev
+      - libltdl-dev
+      - libncurses5-dev
+      - libreadline6-dev
+      - libtinfo-dev
+      - libtool
+      - libyaml-dev
+      - pkg-config
+      - gawk
+      - ruby2.3
+      - ruby2.3-dev
+      - rubygems1.8
+      - rubygems
+      - realpath
+
+  - name: add ru_RU.UTF-8 locale
+    sudo: yes
+    locale_gen: name=ru_RU.UTF-8 state=present
+
+  - name: copy detectumCA.crt
+    sudo: yes
+    copy: src=/usr/local/share/ca-certificates/detectumCA.crt dest=/usr/local/share/ca-certificates/detectumCA.crt
+  - name: copy detectumCA2.crt
+    sudo: yes
+    copy: src=detectumCA2.crt dest=/usr/local/share/ca-certificates/detectumCA2.crt
+
+  - name: update CA
+    sudo: yes
+    command: update-ca-certificates
+
+  - name: install gem with proper $PATH
+    sudo: yes
+    gem: name=rails version=4.2.4 user_install=no
+
+  - name: create detectum user
+    sudo: yes
+    user: name=detectum shell=/bin/bash state=present
+
+  - name: copy detectum sudoers
+    sudo: yes
+    copy: src=detectum_sudoers dest=/etc/sudoers.d/detectum
+
+  - name: copy ~detectum/.netrc
+    sudo: yes
+    sudo_user: detectum
+    copy: src=detectum_netrc dest=~/.netrc
+
+  - name: checkout detectum-search-node
+    sudo: yes
+    sudo_user: detectum
+    git: repo=https://corp.detectum.com/git/detectum-search-node dest=~/detectum-search-node
+
+  - name: checkout detectum-java
+    sudo: yes
+    sudo_user: detectum
+    git: repo=https://corp.detectum.com/git/detectum-java dest=~/detectum-java
+
+  - name: deploy dochkisinochki 9017
+    sudo: yes
+    sudo_user: detectum
+    command: ./deploy.sh dochkisinochki 9017 chdir=~/detectum-java

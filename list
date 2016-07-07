@@ -1,0 +1,1 @@
+ant default-jdk jsvc openjdk-7-jre-headless:amd64 openjdk-7-jdk:amd64 postfix strace unzip zip git erlang-mode haml-elisp hunspell hunspell-en-us emacs24-common-non-dfsg dpkg-dev bc automake autoconf autotools-dev build-essential htop info krb5-user ldap-utils myspell-ru python-yaml mailutils
